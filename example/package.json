@@ -1,0 +1,22 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "client": "yarn tsc && node dist/client.js",
+    "server": "yarn tsc && node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "isomorphic-ws": "^5.0.0",
+    "ws-routable": "^1.0.1",
+    "ws": "^8.8.1"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  }
+}
