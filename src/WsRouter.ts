@@ -1,5 +1,13 @@
-import { Schema } from 'jtd';
+import { Schema, ValidationError } from 'jtd';
 import { Router, Method, RouterOptions, Methods } from './Router';
+
+export class ValidationErrors extends Error {
+  errors: ValidationError[];
+  constructor(message: string, errors: ValidationError[]) {
+    super(message);
+    this.errors = errors;
+  }
+}
 
 export interface WsRequest {
   url: string;

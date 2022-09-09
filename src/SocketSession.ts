@@ -1,4 +1,4 @@
-import { validate } from 'jtd';
+import { Schema, validate } from 'jtd';
 import { ulidFactory } from 'ulid-workers';
 import {
   WsEnvelope,
@@ -8,6 +8,7 @@ import {
   WsResponse,
   WsResponseSchema,
   WsRouter,
+  ValidationErrors,
 } from './WsRouter';
 
 const ulid = ulidFactory();
@@ -19,25 +20,51 @@ type Executor = {
   reject: Rejector;
 };
 
+function validateData(schema: Schema, data: any, errorMessage: string = 'Payload is non conforming') {
+  const errors = validate(schema, data);
+  if (errors.length) {
+    throw new ValidationErrors(errorMessage, errors);
+  }
+}
+
+function parse(event: MessageEvent, type: 'REQUEST' | 'RESPONSE'): WsEnvelope | undefined {
+  if (typeof event.data !== 'string') {
+    throw new Error('event.data is not a string');
+  }
+
+  const data: WsEnvelope = JSON.parse(event.data);
+  // Abort early if this isn't the type we are listening for...
+  if (data.type !== type) {
+    return;
+  }
+
+  validateData(WsEnvelopeSchema, data, 'Envelope is non conforming');
+
+  return data;
+}
+
 export class SocketSession {
+  private logger?: Console;
   private socket: WebSocket;
   private executors = new Map<string, Executor>();
   private abort: AbortController;
 
-  constructor(socket: WebSocket) {
+  constructor(socket: WebSocket, logger?: Console) {
     if (!socket) {
       throw new Error('WebSocket must be provided');
     }
 
     this.socket = socket;
+    this.logger = logger;
     this.abort = new AbortController();
     this.socket.addEventListener('close', this.handleClose, { signal: this.abort.signal });
     this.socket.addEventListener('error', this.handleError, { signal: this.abort.signal });
+    this.socket.addEventListener('message', this.handleResponse, { signal: this.abort.signal });
   }
 
   async connect(): Promise<void> {
     // WebSocket.READY_STATE_OPEN
-    if (this.socket?.readyState === 1) {
+    if (this.socket.readyState === 1) {
       return;
     }
 
@@ -50,11 +77,6 @@ export class SocketSession {
 
   async send(req: Omit<WsRequest, 'id' | 'params' | 'query'>): Promise<WsResponse> {
     return new Promise((resolve, reject) => {
-      // if (!this.socket) {
-      //   reject(new Error('SocketSession: Socket is closed'));
-      //   return;
-      // }
-
       const id = ulid();
       const envelope: WsEnvelope = {
         id,
@@ -62,7 +84,7 @@ export class SocketSession {
         payload: req,
       };
       this.executors.set(id, { resolve, reject });
-      this.socket?.send(JSON.stringify(envelope));
+      this.socket.send(JSON.stringify(envelope));
     });
   }
 
@@ -85,7 +107,9 @@ export class SocketSession {
     });
   }
 
-  private handleClose = (event: CloseEvent) => {};
+  private handleClose = (event: CloseEvent) => {
+    this.logger?.log('close...');
+  };
 
   private handleError = (event: Event) => {
     const executor = this.executors.get('this');
@@ -108,87 +132,49 @@ export class SocketSession {
   //----------------------------------------------------------------------------
 
   async listen<Ctx = any>(router: WsRouter<Ctx>, ctx?: Ctx) {
-    const handler = this.createListener(router, ctx);
-    this.socket?.addEventListener('message', handler, { signal: this.abort.signal });
+    const handler = this.createHandleRequest(router, ctx);
+    this.socket.addEventListener('message', handler, { signal: this.abort.signal });
   }
 
-  private createListener = <Ctx = any>(router: WsRouter<Ctx>, context?: Ctx) => {
-    function parse(event: MessageEvent): WsEnvelope | undefined {
-      try {
-        if (typeof event.data !== 'string') {
-          throw new Error('event.data is not a string');
-        }
-
-        const data: WsEnvelope = JSON.parse(event.data);
-        const errors = validate(WsEnvelopeSchema, data);
-        if (errors.length) {
-          console.error('failed validation...');
-          console.error(errors);
-          // Should we abort this websocket and fail permanently?
-          throw new Error('Invalid message received.');
-        }
-        return data;
-      } catch (err) {
-        console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-        if (err instanceof Error) {
-          console.error(err.message);
-        } else {
-          console.error(`${err}`);
-        }
-      }
-      return undefined;
-    }
-
-    const handleMessage = async (event: MessageEvent) => {
-      const data = parse(event);
+  private handleResponse = async (event: MessageEvent) => {
+    let executor;
+    try {
+      const data = parse(event, 'RESPONSE');
       if (!data) {
-        console.error('non conforming envelope received', data);
         return;
       }
-
       const id = data.id;
-      switch (data.type) {
-        case 'REQUEST': {
-          // Handle with a router...
-          const errors = validate(WsRequestSchema, data.payload);
-          if (errors.length) {
-            console.error('ignoring, non-conforming request');
-            return;
-          }
+      executor = this.executors.get(id);
 
-          const req: WsRequest = data.payload;
-          const request: WsRequest = {
-            ...req,
-            url: req.url,
-          };
+      validateData(WsResponseSchema, data.payload);
+      executor?.resolve(data.payload);
+    } catch (err) {
+      this.logger?.error(err);
+      executor?.reject(err);
+    }
+  };
 
-          const res = (await router?.handle(request, context!)) ?? { status: 404, statusText: 'Not Found' };
-          const envelope: WsEnvelope = {
-            id,
-            type: 'RESPONSE',
-            payload: res,
-          };
-
-          this.socket?.send(JSON.stringify(envelope));
+  private createHandleRequest =
+    <Ctx = any>(router: WsRouter, context?: Ctx) =>
+    async (event: MessageEvent) => {
+      try {
+        const data = parse(event, 'REQUEST');
+        if (!data) {
           return;
         }
-        case 'RESPONSE': {
-          const executors = this.executors.get(id);
+        const id = data.id;
+        validateData(WsRequestSchema, data.payload);
 
-          const errors = validate(WsResponseSchema, data.payload);
-          if (errors.length) {
-            console.error('ignoring, non-conforming response');
-            console.error(errors);
-            executors?.reject(errors);
-            return;
-          }
-
-          const res: WsResponse = data.payload;
-          executors?.resolve(res);
-          return;
-        }
+        const req: WsRequest = data.payload;
+        const res = (await router?.handle(req, context!)) ?? { status: 404, statusText: 'Not Found' };
+        const envelope: WsEnvelope = {
+          id,
+          type: 'RESPONSE',
+          payload: res,
+        };
+        this.socket.send(JSON.stringify(envelope));
+      } catch (err) {
+        this.logger?.error(err);
       }
     };
-    return handleMessage;
-  };
 }
