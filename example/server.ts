@@ -2,10 +2,16 @@ global.WebSocket = require('isomorphic-ws');
 global.crypto = require('crypto').webcrypto;
 
 import { WebSocketServer } from 'ws';
-import { SocketSession, WsResponse, WsRouter } from 'ws-routable';
+import { SocketSession, WsRouter } from 'ws-routable';
 
 export const router = new WsRouter();
 const examples = new Map<string, any>();
+
+export type WsResponse = {
+  status: number;
+  statusText: string;
+  body?: string;
+};
 
 router.put('/examples/:exampleId', (req, ctx) => {
   console.log(`PUT /examples/${req.params.exampleId}`);

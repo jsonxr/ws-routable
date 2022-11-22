@@ -10,23 +10,37 @@ export const Method = {
   PUT: 'PUT',
   TRACE: 'TRACE',
 } as const;
-export const Methods = Object.values(Method);
 export type Method = keyof typeof Method;
 
 export type TRequest = {
   readonly url: string;
   readonly method: string;
-  query?: {
-    [k: string]: string;
-  };
-  params?: {
+};
+export type Query = Record<string, string | string[]>;
+export type RequestParams = {
+  query: Query;
+  params: {
     [k: string]: string;
   };
 };
+const Query = {
+  fromURLSearchParams: (search: URLSearchParams) => {
+    const query: Query = {};
+    for (const name of search.keys()) {
+      const values = search.getAll(name);
+      if (values.length === 1) {
+        query[name] = values[0];
+      } else {
+        query[name] = values;
+      }
+    }
+    return query;
+  },
+};
 
 export type RouteHandler<Req extends TRequest, Res, Ctx> = (
-  req: Req,
-  context: Ctx
+  req: Req & RequestParams,
+  context?: Ctx
 ) => Res | undefined | void | Promise<Res | undefined | void>;
 
 export type RouteEntry<Req extends TRequest, Res, Ctx> = [string, RegExp, RouteHandler<Req, Res, Ctx>[]];
@@ -36,49 +50,46 @@ export interface Route<Req extends TRequest, Res, Ctx> {
 }
 
 export interface RouterOptions<Req extends TRequest, Res, Ctx = any> {
+  id?: string;
   base?: string;
   routes?: RouteEntry<Req, Res, Ctx>[];
 }
 
 export class Router<Req extends TRequest, Res, Ctx = any> {
+  id: string;
   base: string;
   routes: RouteEntry<Req, Res, Ctx>[];
 
-  all: Route<Req, Res, Ctx>;
-  delete: Route<Req, Res, Ctx>;
-  get: Route<Req, Res, Ctx>;
-  head: Route<Req, Res, Ctx>;
-  options: Route<Req, Res, Ctx>;
-  patch: Route<Req, Res, Ctx>;
-  post: Route<Req, Res, Ctx>;
-  put: Route<Req, Res, Ctx>;
-  trace: Route<Req, Res, Ctx>;
-
-  constructor({ base = '', routes = [] }: RouterOptions<Req, Res, Ctx> = {}) {
+  constructor({ base = '', routes = [], id }: RouterOptions<Req, Res, Ctx> = {}) {
     this.base = base;
     this.routes = routes;
-    this.all = this.addRoute('ALL');
-    this.delete = this.addRoute('DELETE');
-    this.get = this.addRoute('GET');
-    this.head = this.addRoute('HEAD');
-    this.options = this.addRoute('OPTIONS');
-    this.patch = this.addRoute('PATCH');
-    this.post = this.addRoute('POST');
-    this.put = this.addRoute('PUT');
-    this.trace = this.addRoute('TRACE');
+    this.id = id ?? '';
   }
 
+  all = this.addRoute('ALL');
+  delete = this.addRoute('DELETE');
+  get = this.addRoute('GET');
+  head = this.addRoute('HEAD');
+  options = this.addRoute('OPTIONS');
+  patch = this.addRoute('PATCH');
+  post = this.addRoute('POST');
+  put = this.addRoute('PUT');
+  trace = this.addRoute('TRACE');
+
   // We want to be able to just hand off router.handle so, bind it to this instance
-  handle = async (req: Req, context: Ctx) => {
+  handle = async (req: Req, context?: Ctx) => {
+    const request = req as Req & RequestParams; // query, parmas Guaranteed to be assigned before called in handler
+
     //TODO: localhost hardcoded here for DurableObjects, how can we remove?
-    const url = req.url.indexOf('://') > 0 ? new URL(req.url) : new URL(`http://localhost${req.url}`);
-    req.query = Object.fromEntries(url.searchParams);
+    const url = new URL(req.url); // req.url.indexOf('://') > 0 ? new URL(req.url) : new URL(`http://localhost${req.url}`);
+    request.query = Query.fromURLSearchParams(url.searchParams);
+
     for (const [method, route, handlers] of this.routes) {
       const match = url.pathname.match(route);
       if ((method === req.method || method === 'ALL') && match) {
-        req.params = match.groups ?? {};
+        request.params = match.groups ?? {};
         for (const handler of handlers) {
-          const res = await handler(req, context);
+          const res = await (context ? handler(request, context) : handler(request));
           if (res !== undefined) {
             return res;
           }

@@ -1,5 +1,5 @@
 global.WebSocket = require('isomorphic-ws');
-global.crypto = require('crypto').webcrypto;
+global.crypto = require('node:crypto').webcrypto;
 
 import { SocketSession, WsRouter } from 'ws-routable';
 
