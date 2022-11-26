@@ -1,33 +1,27 @@
 import { Envelope, EnvelopeType } from './Envelope';
 import { Executors } from './Executors';
-import { WsRequest, WsResponse } from './types';
-import { toAbsoluteURL } from './utils';
 import { throwIfValidationErrors, RequestSchema, ResponseSchema } from './Validation';
-import { WsRouter } from './WsRouter';
+
+export type Listener = <T>(req: any) => Promise<T>;
 
 export type SocketLogger = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error(message?: any, ...optionalParams: any[]): void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(message?: any, ...optionalParams: any[]): void;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class SocketSession<Ctx = any> {
-  static timeout = 3000;
+export class SocketSession<Req extends object = any, Res extends object = any> {
+  timeout = 3000;
   #logger?: SocketLogger;
-  #headers: Record<string, string>;
   #socket: WebSocket;
   #executors = new Executors();
   #abort: AbortController;
 
-  constructor(socket: WebSocket, options: { headers?: Record<string, string>; logger?: Console } = {}) {
+  constructor(socket: WebSocket, options: { logger?: Console } = {}) {
     if (!socket) {
       throw new Error('WebSocket must be provided');
     }
 
     this.#socket = socket;
-    this.#headers = options.headers ?? {};
     this.#logger = options.logger;
     this.#abort = new AbortController();
     this.#socket.addEventListener('close', this.#handleClose, { signal: this.#abort.signal });
@@ -44,7 +38,7 @@ export class SocketSession<Ctx = any> {
     this.#socket.addEventListener('open', this.#handleOpen, { signal: this.#abort.signal });
 
     return new Promise((resolve, reject) => {
-      this.#executors.set('this', { resolve, reject, timeout: 30000 });
+      this.#executors.set('this', { resolve, reject, timeout: this.timeout });
     });
   }
 
@@ -62,20 +56,20 @@ export class SocketSession<Ctx = any> {
     });
   }
 
-  send(req: WsRequest, options: { timeout?: number } = {}): Promise<WsResponse> {
+  send(req: Req, options: { timeout?: number } = {}): Promise<Res> {
     throwIfValidationErrors(RequestSchema, req, 'Invalid Request');
     return this.open().then(() => {
       return new Promise((resolve, reject) => {
-        req.url = toAbsoluteURL(this.#socket.url, req.url).toString();
+        //TODO: req.url = toAbsoluteURL(this.#socket.url, req.url).toString(); // Add this to higher level object
         const envelope: Envelope = Envelope.wrapRequest(req);
-        this.#executors.set(envelope.id, { resolve, reject, timeout: options.timeout ?? SocketSession.timeout });
+        this.#executors.set(envelope.id, { resolve, reject, timeout: options.timeout ?? this.timeout });
         this.#socket.send(JSON.stringify(envelope));
       });
     });
   }
 
-  listen(router: WsRouter<WsResponse, Ctx>, ctx?: Ctx) {
-    const handler = this.#createHandleRequest(router, ctx);
+  listen(listener: Listener) {
+    const handler = this.#createHandleRequest(listener);
     this.#socket.addEventListener('message', handler, { signal: this.#abort.signal });
   }
 
@@ -101,7 +95,7 @@ export class SocketSession<Ctx = any> {
     }
   };
 
-  #createHandleRequest = (router: WsRouter<WsResponse, Ctx>, context?: Ctx) => async (event: MessageEvent) => {
+  #createHandleRequest = (listener: Listener) => async (event: MessageEvent) => {
     try {
       const data = Envelope.parse(event.data, EnvelopeType.REQUEST);
       if (!data) {
@@ -109,10 +103,8 @@ export class SocketSession<Ctx = any> {
       }
       const id = data.id;
       throwIfValidationErrors(RequestSchema, data.payload);
-
-      const req: WsRequest = data.payload;
-      req.headers = this.#headers;
-      const res = await router.handle(req, context);
+      //TODO: req.headers = this.#headers; // Add this to a higher level object...
+      const res = await listener(data.payload);
       const envelope = Envelope.wrapResponse(id, res ?? { status: 404, statusText: 'Not Found' });
       this.#socket.send(JSON.stringify(envelope));
     } catch (err) {

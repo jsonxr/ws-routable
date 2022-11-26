@@ -28,7 +28,6 @@ describe('Envelope', () => {
     });
     it('should throw an error if data is not a string', () => {
       expect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Envelope.parse(0 as any, EnvelopeType.RESPONSE);
       }).toThrowError();
     });

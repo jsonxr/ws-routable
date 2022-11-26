@@ -1,5 +1,4 @@
 import { ulidFactory } from 'ulid-workers';
-import { WsRequest, WsResponse } from './types';
 import { EnvelopeSchema, throwIfValidationErrors } from './Validation';
 
 const ulid = ulidFactory();
@@ -15,7 +14,6 @@ export type EnvelopeType = keyof typeof EnvelopeType;
 export interface Envelope {
   id: string;
   type: EnvelopeType;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
 }
 
@@ -36,7 +34,7 @@ export const Envelope = {
     return parsed;
   },
 
-  wrapRequest(payload: WsRequest): Envelope {
+  wrapRequest(payload: any): Envelope {
     return {
       id: ulid(),
       type: EnvelopeType.REQUEST,
@@ -44,7 +42,7 @@ export const Envelope = {
     };
   },
 
-  wrapResponse(id: string, payload: WsResponse): Envelope {
+  wrapResponse(id: string, payload: any): Envelope {
     return {
       id,
       type: EnvelopeType.RESPONSE,

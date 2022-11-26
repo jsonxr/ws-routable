@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import WS from 'jest-websocket-mock';
-import { WsRouter } from '../WsRouter';
 
 import { SocketSession } from '../SocketSession';
 import { Envelope, EnvelopeType } from '../Envelope';
@@ -94,20 +92,16 @@ describe.only('SocketSession', () => {
   it('should listen', async () => {
     const { server, socket } = await create();
     const fn = jest.fn();
-    const router = new WsRouter();
-    router.all('*', fn);
-    socket.listen(router);
+    //TODO: Add this to a higher level object...
+    // const router = new WsRouter();
+    // router.all('*', fn);
+    socket.listen(fn);
 
     server.send(JSON.stringify(Envelope.wrapRequest({ method: 'GET', url: 'http://localhost/test' })));
 
     expect(fn).toHaveBeenCalledWith({
-      headers: {},
       method: 'GET',
-      params: {},
-      query: {},
       url: 'http://localhost/test',
     });
-
-    //expect(router.handle)
   });
 });

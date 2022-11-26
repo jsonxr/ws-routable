@@ -28,7 +28,6 @@ describe('Validation', () => {
     });
     it('should throw error if data is not an object', () => {
       expect(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         validate(RequestSchema, 'fake' as any);
       }).toThrowError('Validation.validate: data is not an object');
     });
@@ -63,7 +62,6 @@ describe('Validation', () => {
   describe('EnvelopeSchema', () => {
     it('should have all the types for the enum', () => {
       const EnvelopeTypes = [...Object.keys(EnvelopeType)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const schema: any = EnvelopeSchema;
       expect(EnvelopeTypes).toEqual(schema.properties?.type?.enum);
     });
@@ -72,7 +70,6 @@ describe('Validation', () => {
   describe('RequestSchema', () => {
     it('should have all the types for the enum', () => {
       const MethodTypes = [...Object.keys(Method)];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const schema: any = RequestSchema;
       expect(MethodTypes).toEqual(schema.properties?.method?.enum);
     });

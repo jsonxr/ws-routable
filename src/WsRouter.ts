@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router, RouterOptions } from './Router';
 import { WsRequest, WsResponse } from './types';
 
