@@ -26,6 +26,12 @@ describe('Validation', () => {
       const mapped = errors.map(e => e.schemaPath.join('/'));
       expect(mapped).toEqual(['properties/url', 'properties/method']);
     });
+    it('should throw error if data is not an object', () => {
+      expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        validate(RequestSchema, 'fake' as any);
+      }).toThrowError('Validation.validate: data is not an object');
+    });
   });
 
   describe('ValidationErrors', () => {
@@ -57,14 +63,18 @@ describe('Validation', () => {
   describe('EnvelopeSchema', () => {
     it('should have all the types for the enum', () => {
       const EnvelopeTypes = [...Object.keys(EnvelopeType)];
-      expect(EnvelopeTypes).toEqual((EnvelopeSchema as any).properties.type.enum);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const schema: any = EnvelopeSchema;
+      expect(EnvelopeTypes).toEqual(schema.properties?.type?.enum);
     });
   });
 
   describe('RequestSchema', () => {
     it('should have all the types for the enum', () => {
       const MethodTypes = [...Object.keys(Method)];
-      expect(MethodTypes).toEqual((RequestSchema as any).properties.method.enum);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const schema: any = RequestSchema;
+      expect(MethodTypes).toEqual(schema.properties?.method?.enum);
     });
   });
 });

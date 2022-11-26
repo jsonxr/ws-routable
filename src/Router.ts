@@ -50,13 +50,13 @@ export interface Route<Req extends TRequest, Res, Ctx> {
   (path: string, ...handlers: RouteHandler<Req, Res, Ctx>[]): Router<Req, Res, Ctx>;
 }
 
-export interface RouterOptions<Req extends TRequest, Res, Ctx = any> {
+export interface RouterOptions<Req extends TRequest, Res, Ctx = unknown> {
   id?: string;
   base?: string;
   routes?: RouteEntry<Req, Res, Ctx>[];
 }
 
-export class Router<Req extends TRequest, Res, Ctx = any> {
+export class Router<Req extends TRequest, Res, Ctx = unknown> {
   id: string;
   base: string;
   routes: RouteEntry<Req, Res, Ctx>[];

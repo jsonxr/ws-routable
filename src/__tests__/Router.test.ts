@@ -29,7 +29,7 @@ const createRouter = () => {
  * @param functions
  * @param name
  */
-const expectOnlyToBeCalled = (functions: Record<string, any>, name: string) => {
+const expectOnlyToBeCalled = (functions: Record<string, unknown>, name: string) => {
   const functionNames = Object.keys(functions);
   for (const functionName of functionNames) {
     if (name === functionName) {
@@ -96,7 +96,7 @@ describe('Router', () => {
     });
 
     it('should route all', async () => {
-      const { router, functions: functions } = createRouter();
+      const { router } = createRouter();
       const all = jest.fn();
       router.all('*', all);
       await router.handle({ url: 'http://localhost', method: Method.GET });

@@ -18,7 +18,7 @@ describe('Executors', () => {
     const result = executors.get('1'); // Clears the timeout
     expect(result).toBeDefined();
     await delay(10);
-    result!.resolve();
+    result?.resolve();
     expect(executor.reject).not.toBeCalled();
     expect(executor.resolve).toBeCalled();
   });

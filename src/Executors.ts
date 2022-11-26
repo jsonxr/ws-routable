@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Resolver = (value?: void | PromiseLike<void> | any) => void;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Rejector = (reason?: any) => void;
 export type Executor = {
   timeout?: number;
@@ -50,6 +52,7 @@ export class Executors {
     this.#executors.delete(key);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   resolve(key: string, value?: any) {
     const executor = this.get(key);
     if (!executor) {
@@ -58,6 +61,7 @@ export class Executors {
     executor.resolve(value);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reject(key: string, reason?: any) {
     const executor = this.get(key);
     if (!executor) {

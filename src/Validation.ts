@@ -52,12 +52,15 @@ export class ValidationErrors extends Error {
   }
 }
 
-export function validate(schema: Schema, data: any) {
+export function validate(schema: Schema, data: object) {
+  if (typeof data !== 'object') {
+    throw Error('Validation.validate: data is not an object');
+  }
   const errors = jtdValidate(schema, data);
   return errors;
 }
 
-export function throwIfValidationErrors(schema: Schema, data: any, errorMessage: string = 'Payload is non conforming') {
+export function throwIfValidationErrors(schema: Schema, data: object, errorMessage = 'Payload is non conforming') {
   const errors = validate(schema, data);
   if (errors.length) {
     throw new ValidationErrors(errorMessage, errors);

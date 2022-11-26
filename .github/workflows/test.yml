@@ -1,4 +1,4 @@
-name: Test
+name: Tests
 on: [push]
 jobs:
   test:
@@ -10,4 +10,5 @@ jobs:
         with:
           node-version: 18.x
       - run: yarn
+      - run: yarn lint
       - run: yarn test

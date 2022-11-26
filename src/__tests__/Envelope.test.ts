@@ -15,8 +15,10 @@ describe('Envelope', () => {
       const str = JSON.stringify(envelope);
       const parsed = Envelope.parse(str, EnvelopeType.REQUEST);
       expect(parsed).toBeDefined();
-      expect(parsed!.type).toEqual(EnvelopeType.REQUEST);
-      expect(parsed!.payload).toEqual(envelope.payload);
+      if (parsed) {
+        expect(parsed.type).toEqual(EnvelopeType.REQUEST);
+        expect(parsed.payload).toEqual(envelope.payload);
+      }
     });
     it('should ignore if parsed with wrong type', () => {
       const envelope = Envelope.wrapRequest({ method: 'GET', url: '/tests' });
@@ -26,6 +28,7 @@ describe('Envelope', () => {
     });
     it('should throw an error if data is not a string', () => {
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         Envelope.parse(0 as any, EnvelopeType.RESPONSE);
       }).toThrowError();
     });

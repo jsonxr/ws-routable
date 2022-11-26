@@ -15,11 +15,12 @@ export type EnvelopeType = keyof typeof EnvelopeType;
 export interface Envelope {
   id: string;
   type: EnvelopeType;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
 }
 
 export const Envelope = {
-  parse(data: any, type: EnvelopeType): Envelope | undefined {
+  parse(data: unknown, type: EnvelopeType): Envelope | undefined {
     if (typeof data !== 'string') {
       throw new Error('data is not a string');
     }

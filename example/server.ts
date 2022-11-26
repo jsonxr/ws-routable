@@ -1,11 +1,12 @@
 global.WebSocket = require('isomorphic-ws');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 global.crypto = require('crypto').webcrypto;
 
 import { WebSocketServer } from 'ws';
 import { SocketSession, WsRouter } from 'ws-routable';
 
 export const router = new WsRouter();
-const examples = new Map<string, any>();
+const examples = new Map<string, unknown>();
 
 export type WsResponse = {
   status: number;
@@ -26,7 +27,7 @@ router.put('/examples/:exampleId', (req, ctx) => {
   return res;
 });
 
-router.get('/examples/:exampleId', (req, ctx) => {
+router.get('/examples/:exampleId', req => {
   console.log(`GET /examples/${req.params.exampleId}`);
   const example = examples.get(req.params.exampleId);
   const res: WsResponse = {

@@ -6,10 +6,13 @@ import { throwIfValidationErrors, RequestSchema, ResponseSchema } from './Valida
 import { WsRouter } from './WsRouter';
 
 export type SocketLogger = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error(message?: any, ...optionalParams: any[]): void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   log(message?: any, ...optionalParams: any[]): void;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class SocketSession<Ctx = any> {
   static timeout = 3000;
   #logger?: SocketLogger;
@@ -76,6 +79,7 @@ export class SocketSession<Ctx = any> {
     this.#socket.addEventListener('message', handler, { signal: this.#abort.signal });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   #handleClose = (_event: CloseEvent) => {
     this.#logger?.log('close...');
   };
@@ -89,6 +93,7 @@ export class SocketSession<Ctx = any> {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   #handleOpen = (_event: Event) => {
     const executor = this.#executors.peek('this');
     if (executor) {

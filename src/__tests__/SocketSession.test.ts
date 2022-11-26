@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import WS from 'jest-websocket-mock';
 import { WsRouter } from '../WsRouter';
 
@@ -50,7 +51,7 @@ describe.only('SocketSession', () => {
   });
 
   it('should resolve with a WsResponse', async () => {
-    const { server, client, socket } = await create();
+    const { server, socket } = await create();
     // Should NOT await send because it will block forever while we wait for the response that is sent on the next line...
     const promise = socket.send({ method: 'PUT', url: '/examples/0002', body: JSON.stringify({ name: 'help' }) });
     await respond(server, 'hi!');
@@ -61,7 +62,7 @@ describe.only('SocketSession', () => {
 
   it('should throw an error if invalid send request', async () => {
     const { socket } = await create();
-    expect(() => socket.send('fake' as any)).toThrowError('Invalid Request');
+    expect(() => socket.send({ fake: 'fake' } as any)).toThrowError('Invalid Request');
   });
 
   it('should reject with a bad server response with an invalid payload', async () => {
@@ -76,7 +77,7 @@ describe.only('SocketSession', () => {
     const envelope: Envelope = {
       id,
       type: EnvelopeType.RESPONSE,
-      payload: 'fake',
+      payload: { fake: 'fake' },
     };
     server.send(JSON.stringify(envelope));
 
@@ -91,7 +92,7 @@ describe.only('SocketSession', () => {
   });
 
   it('should listen', async () => {
-    const { server, client, socket } = await create();
+    const { server, socket } = await create();
     const fn = jest.fn();
     const router = new WsRouter();
     router.all('*', fn);
