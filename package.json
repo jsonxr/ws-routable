@@ -8,10 +8,10 @@
   "browser": "dist/ws-routable.umd.js",
   "scripts": {
     "clean": "rm -rf dist node_modules coverage",
-    "dev": "rollup -c -w",
+    "start": "rollup -c -w",
     "test": "yarn jest",
-    "ci": "rollup -c",
-    ".prepare": "yarn build"
+    "build": "rollup -c",
+    ".whatisthis.prepare": "yarn build"
   },
   "dependencies": {},
   "files": [

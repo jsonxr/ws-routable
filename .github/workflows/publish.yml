@@ -3,8 +3,25 @@ on:
   release:
     types: [created]
 jobs:
-  build:
+  test:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn install --frozen-lockfile
+      - run: yarn test
+
+  publish:
+    needs: test
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: read
       packages: write
@@ -13,10 +30,10 @@ jobs:
       # Setup .npmrc file to publish to GitHub Packages
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: 18.x
           registry-url: 'https://registry.npmjs.org'
-      - run: yarn test
-      - run: yarn ci
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
       - run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
