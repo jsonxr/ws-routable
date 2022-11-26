@@ -4,7 +4,7 @@ import pluginTypescript from '@rollup/plugin-typescript';
 import { uglify } from 'rollup-plugin-uglify';
 import pkg from './package.json';
 
-const typescript = pluginTypescript({ tsconfig: './tsconfig.json' });
+const typescript = pluginTypescript({ tsconfig: './tsconfig.json', exclude: ['**/__tests__', '**/*.test.ts'] });
 const commonjs = pluginCommonjs({ include: 'node_modules/**' });
 
 export default [

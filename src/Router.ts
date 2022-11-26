@@ -23,6 +23,7 @@ export type RequestParams = {
     [k: string]: string;
   };
 };
+
 const Query = {
   fromURLSearchParams: (search: URLSearchParams) => {
     const query: Query = {};

@@ -10,7 +10,7 @@ export type SocketLogger = {
   log(message?: any, ...optionalParams: any[]): void;
 };
 
-export class SocketSession<Ctx> {
+export class SocketSession<Ctx = any> {
   static timeout = 3000;
   #logger?: SocketLogger;
   #headers: Record<string, string>;
