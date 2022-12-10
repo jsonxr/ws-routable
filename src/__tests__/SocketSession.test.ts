@@ -1,8 +1,7 @@
 import WS from 'jest-websocket-mock';
 
-import { Logger, SocketSession, SocketSessionState } from '../SocketSession';
+import { getSessionStateFromSocket, Logger, SocketSession, SocketSessionState } from '../SocketSession';
 import { Envelope, EnvelopeType } from '../Envelope';
-import { logSocketState } from '../utils';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const create = async () => {
@@ -230,5 +229,15 @@ describe('SocketSession', () => {
       await expect(promise).rejects.toEqual(new Error('TIMEOUT'));
       expect(logger.error).toHaveBeenCalledWith(new SyntaxError('Unexpected token g in JSON at position 0'));
     });
+  });
+});
+
+describe('getSessionStateFromSocket', () => {
+  it('should return correct values when sent the readyState of a socket', () => {
+    expect(getSessionStateFromSocket(-1)).toEqual(SocketSessionState.UNKNOWN);
+    expect(getSessionStateFromSocket(WebSocket.CLOSED)).toEqual(SocketSessionState.CLOSED);
+    expect(getSessionStateFromSocket(WebSocket.CLOSING)).toEqual(SocketSessionState.CLOSING);
+    expect(getSessionStateFromSocket(WebSocket.CONNECTING)).toEqual(SocketSessionState.CONNECTING);
+    expect(getSessionStateFromSocket(WebSocket.OPEN)).toEqual(SocketSessionState.OPEN);
   });
 });
