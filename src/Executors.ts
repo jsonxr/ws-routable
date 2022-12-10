@@ -65,4 +65,12 @@ export class Executors {
     }
     executor.reject(reason);
   }
+
+  get size() {
+    return this.#executors.size;
+  }
+
+  keys() {
+    return this.#executors.keys();
+  }
 }

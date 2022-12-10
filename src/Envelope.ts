@@ -8,6 +8,7 @@ const ulid = ulidFactory();
 export const EnvelopeType = {
   REQUEST: 'REQUEST',
   RESPONSE: 'RESPONSE',
+  ERROR: 'ERROR',
 } as const;
 export type EnvelopeType = keyof typeof EnvelopeType;
 
@@ -18,20 +19,24 @@ export interface Envelope {
 }
 
 export const Envelope = {
-  parse(data: unknown, type: EnvelopeType): Envelope | undefined {
+  parse(data: string): Envelope | undefined {
     if (typeof data !== 'string') {
       throw new Error('data is not a string');
     }
 
     const parsed: Envelope = JSON.parse(data);
-    // Abort early if this isn't the type we are listening for...
-    if (parsed.type !== type) {
-      return;
-    }
 
     throwIfValidationErrors(EnvelopeSchema, parsed, 'Envelope is non conforming');
 
     return parsed;
+  },
+
+  wrapError(id: string, error: any): Envelope {
+    return {
+      id,
+      type: EnvelopeType.ERROR,
+      payload: error,
+    };
   },
 
   wrapRequest(payload: any): Envelope {

@@ -7,28 +7,22 @@ describe('Envelope', () => {
       const data = { type: EnvelopeType.REQUEST };
       const str = JSON.stringify(data);
       expect(() => {
-        Envelope.parse(str, EnvelopeType.REQUEST);
+        Envelope.parse(str);
       }).toThrowError('Envelope is non conforming');
     });
     it('should parse a request', () => {
       const envelope = Envelope.wrapRequest({ method: 'GET', url: '/tests' });
       const str = JSON.stringify(envelope);
-      const parsed = Envelope.parse(str, EnvelopeType.REQUEST);
+      const parsed = Envelope.parse(str);
       expect(parsed).toBeDefined();
       if (parsed) {
         expect(parsed.type).toEqual(EnvelopeType.REQUEST);
         expect(parsed.payload).toEqual(envelope.payload);
       }
     });
-    it('should ignore if parsed with wrong type', () => {
-      const envelope = Envelope.wrapRequest({ method: 'GET', url: '/tests' });
-      const str = JSON.stringify(envelope);
-      const parsed = Envelope.parse(str, EnvelopeType.RESPONSE);
-      expect(parsed).toBeUndefined();
-    });
     it('should throw an error if data is not a string', () => {
       expect(() => {
-        Envelope.parse(0 as any, EnvelopeType.RESPONSE);
+        Envelope.parse(0 as any);
       }).toThrowError();
     });
   });
@@ -54,6 +48,13 @@ describe('Envelope', () => {
       expect(envelope).toBeDefined();
       expect(envelope.type).toEqual(EnvelopeType.RESPONSE);
       expect(envelope.payload).toEqual(payload);
+    });
+  });
+
+  describe('wrapError', () => {
+    it('should return return envelope with type and the right id', () => {
+      const envelope = Envelope.wrapError('1', 'error');
+      expect(envelope).toEqual({ id: '1', payload: 'error', type: EnvelopeType.ERROR });
     });
   });
 });

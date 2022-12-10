@@ -6,7 +6,7 @@ import { Schema, ValidationError, validate as jtdValidate } from 'jtd';
 export const EnvelopeSchema = {
   properties: {
     id: { type: 'string' },
-    type: { enum: ['REQUEST', 'RESPONSE'] },
+    type: { enum: ['REQUEST', 'RESPONSE', 'ERROR'] },
     payload: { nullable: false },
   },
 } as Schema;
@@ -52,17 +52,17 @@ export class ValidationErrors extends Error {
   }
 }
 
-export function validate(schema: Schema, data: object) {
+export const validate = (schema: Schema, data: object) => {
   if (typeof data !== 'object') {
     throw Error('Validation.validate: data is not an object');
   }
   const errors = jtdValidate(schema, data);
   return errors;
-}
+};
 
-export function throwIfValidationErrors(schema: Schema, data: object, errorMessage = 'Payload is non conforming') {
+export const throwIfValidationErrors = (schema: Schema, data: object, errorMessage = 'Payload is non conforming') => {
   const errors = validate(schema, data);
   if (errors.length) {
     throw new ValidationErrors(errorMessage, errors);
   }
-}
+};

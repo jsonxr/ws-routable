@@ -1,9 +1,11 @@
 import WS from 'jest-websocket-mock';
 
-import { SocketSession } from '../SocketSession';
+import { Logger, SocketSession, SocketSessionState } from '../SocketSession';
 import { Envelope, EnvelopeType } from '../Envelope';
+import { logSocketState } from '../utils';
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function create() {
+const create = async () => {
   const server = new WS(URL);
   const client = new WebSocket(URL);
   const socket = new SocketSession(client);
@@ -13,9 +15,17 @@ async function create() {
     client,
     socket,
   };
-}
+};
 
-async function respond(server: WS, body: any) {
+const createLogger = (): Logger => ({
+  info: jest.fn(),
+  debug: jest.fn(),
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+});
+
+const respond = async (server: WS, body: any) => {
   const str: any = await server.nextMessage;
   const message: any = JSON.parse(str);
   const id = message.id;
@@ -25,10 +35,10 @@ async function respond(server: WS, body: any) {
     body,
   });
   server.send(JSON.stringify(envelope));
-}
+};
 
 const URL = 'ws://localhost:1234';
-describe.only('SocketSession', () => {
+describe('SocketSession', () => {
   afterEach(() => {
     WS.clean();
   });
@@ -48,60 +58,177 @@ describe.only('SocketSession', () => {
     });
   });
 
-  it('should resolve with a WsResponse', async () => {
-    const { server, socket } = await create();
-    // Should NOT await send because it will block forever while we wait for the response that is sent on the next line...
-    const promise = socket.send({ method: 'PUT', url: '/examples/0002', body: JSON.stringify({ name: 'help' }) });
-    await respond(server, 'hi!');
-    const res1 = await promise;
-    expect(res1.body).toBeDefined();
-    expect(res1.body).toEqual('hi!');
+  describe('open', () => {
+    it('should reject if can not open', async () => {
+      const server = new WS(URL);
+      const client = new WebSocket(URL);
+      const socket = new SocketSession(client);
+      const promise = socket.open();
+      server.error({ code: 3000, reason: 'test', wasClean: false }); // code doesn't matter
+      await expect(promise).rejects.toEqual({ code: 3000, reason: 'test' });
+      socket.close();
+    });
+    it('should return immediately if websocket is already open', async () => {
+      const server = new WS(URL);
+      const client = new WebSocket(URL);
+      await server.connected;
+
+      const socket = new SocketSession(client);
+      await socket.open();
+      expect(socket.state).toEqual(SocketSessionState.OPEN);
+    });
   });
 
-  it('should throw an error if invalid send request', async () => {
-    const { socket } = await create();
-    expect(() => socket.send({ fake: 'fake' } as any)).toThrowError('Invalid Request');
+  // describe('event listeners', () => {
+  //   it('should handle errors', async () => {
+  //     const { server, socket } = await create();
+  //     server.error();
+  //   });
+  // });
+
+  describe('send', () => {
+    it('should resolve with a response', async () => {
+      const { server, socket } = await create();
+      // Should NOT await send because it will block forever while we wait for the response that is sent on the next line...
+      const promise = socket.send(42);
+      await respond(server, 'hi!');
+      const res1 = await promise;
+      expect(res1.body).toBeDefined();
+      expect(res1.body).toEqual('hi!');
+    });
+
+    it('should allow sending of a number', async () => {
+      const { server, socket } = await create();
+      socket.send(42);
+      await respond(server, 'ok');
+      socket.close();
+    });
+
+    it('should allow sending of a string', async () => {
+      const { server, socket } = await create();
+      socket.send('42');
+      await respond(server, 'yep');
+      socket.close();
+    });
+
+    it('should allow sending of an object', async () => {
+      const { server, socket } = await create();
+      socket.send({ value: '42' });
+      await respond(server, 'yes');
+      socket.close();
+    });
+
+    it('should reject if server returns error', async () => {
+      const { server, socket } = await create();
+      const fn = jest.fn();
+      socket.listen(fn);
+      const promise = socket.send({ hello: 'world' });
+
+      await delay(10);
+      expect(server.messagesToConsume.pendingItems.length).toEqual(1);
+      const msg: any = await server.nextMessage;
+      const req = Envelope.parse(msg);
+      if (req) {
+        const id = req.id;
+        server.send(JSON.stringify(Envelope.wrapError(id, 'Oops')));
+      }
+      expect(promise).rejects.toEqual('Oops');
+    });
   });
 
-  it('should reject with a bad server response with an invalid payload', async () => {
-    const { server, socket } = await create();
-    // Should NOT await send because it will block forever while we wait for the response that is sent on the next line...
-    const promise = socket.send({ method: 'PUT', url: '/examples/0002', body: JSON.stringify({ name: 'help' }) });
+  describe('close', () => {
+    it('should close', async () => {
+      const { client, socket } = await create();
+      expect(client.readyState).toEqual(WebSocket.OPEN);
+      await socket.close();
+      expect(client.readyState).toEqual(WebSocket.CLOSED);
+    });
 
-    // Server responds with an invalid envelope but correct id...
-    const str: any = await server.nextMessage;
-    const message: any = JSON.parse(str);
-    const id = message.id;
-    const envelope: Envelope = {
-      id,
-      type: EnvelopeType.RESPONSE,
-      payload: { fake: 'fake' },
-    };
-    server.send(JSON.stringify(envelope));
+    it('should log a warning if we close before our promises have resolved', async () => {
+      const server = new WS(URL);
+      const client = new WebSocket(URL);
+      const logger = createLogger();
+      const socket = new SocketSession(client, { logger });
+      await socket.open();
+      socket.send(42);
 
-    await expect(promise).rejects.toThrowError('Payload is non conforming');
+      socket.close();
+      expect(logger.warn).toBeCalledWith(expect.stringContaining('SocketSession: requests'));
+      await respond(server, 'ok'); // Don't make us timeout
+    });
   });
 
-  it('should close', async () => {
-    const { client, socket } = await create();
-    expect(client.readyState).toEqual(WebSocket.OPEN);
-    await socket.close();
-    expect(client.readyState).toEqual(WebSocket.CLOSED);
+  describe('listen', () => {
+    it('should send a response if we are listening', async () => {
+      const { server, socket } = await create();
+      const fn = jest.fn();
+      socket.listen(fn);
+      const payload = { method: 'GET', url: 'http://localhost/test' };
+      server.send(JSON.stringify(Envelope.wrapRequest(payload)));
+
+      // Make certain that the client sent a message
+      await delay(10);
+      expect(server.messagesToConsume.pendingItems.length).toEqual(1);
+
+      // Make sure we sent a message back to the server
+      const next: any = await server.nextMessage;
+      const res = JSON.parse(next);
+      expect(res.type).toEqual(EnvelopeType.RESPONSE);
+
+      // Did it call our listener?
+      expect(fn).toHaveBeenCalledWith(payload);
+    });
+
+    it("should ignore all requests if we aren't listening", async () => {
+      const { server } = await create();
+      const payload = { method: 'GET', url: 'http://localhost/test' };
+      server.send(JSON.stringify(Envelope.wrapRequest(payload)));
+
+      // Make certain that the client didn't send a message
+      await delay(100);
+      expect(server.messagesToConsume.pendingItems.length).toEqual(0);
+    });
+
+    it('should not respond to a respone when listening', async () => {
+      const { server, socket } = await create();
+      const fn = jest.fn();
+      socket.listen(fn);
+      const payload = { method: 'GET', url: 'http://localhost/test' };
+      server.send(JSON.stringify(Envelope.wrapResponse('1', payload)));
+      expect(fn).not.toHaveBeenCalled();
+    });
+
+    it('should send an ERROR if the listener throws an error', async () => {
+      const server = new WS(URL);
+      const client = new WebSocket(URL);
+      const logger = createLogger();
+      const socket = new SocketSession(client, { logger });
+      socket.listen(() => {
+        throw Error('Error');
+      });
+
+      const envelope = Envelope.wrapRequest(42);
+      server.send(JSON.stringify(envelope));
+
+      await delay(10); // Let the socket have time to send the mock an error response
+      expect(server.messagesToConsume.pendingItems.length).toBeGreaterThan(0);
+      const str: any = await server.nextMessage;
+      const res = JSON.parse(str);
+      expect(res.type).toEqual(EnvelopeType.ERROR);
+    });
   });
 
-  it('should listen', async () => {
-    const { server, socket } = await create();
-    const fn = jest.fn();
-    //TODO: Add this to a higher level object...
-    // const router = new WsRouter();
-    // router.all('*', fn);
-    socket.listen(fn);
+  describe('#handleMessage', () => {
+    it('should log an error if the server does not send us an Envelope', async () => {
+      const server = new WS(URL);
+      const client = new WebSocket(URL);
+      const logger = createLogger();
+      const socket = new SocketSession(client, { logger });
+      const promise = socket.send(42, { timeout: 1000 });
 
-    server.send(JSON.stringify(Envelope.wrapRequest({ method: 'GET', url: 'http://localhost/test' })));
-
-    expect(fn).toHaveBeenCalledWith({
-      method: 'GET',
-      url: 'http://localhost/test',
+      server.send('garbage message');
+      await expect(promise).rejects.toEqual(new Error('TIMEOUT'));
+      expect(logger.error).toHaveBeenCalledWith(new SyntaxError('Unexpected token g in JSON at position 0'));
     });
   });
 });

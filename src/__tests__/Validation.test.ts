@@ -60,7 +60,7 @@ describe('Validation', () => {
   });
 
   describe('EnvelopeSchema', () => {
-    it('should have all the types for the enum', () => {
+    it('should have all the types for the EnvelopeType enum', () => {
       const EnvelopeTypes = [...Object.keys(EnvelopeType)];
       const schema: any = EnvelopeSchema;
       expect(EnvelopeTypes).toEqual(schema.properties?.type?.enum);
@@ -68,7 +68,7 @@ describe('Validation', () => {
   });
 
   describe('RequestSchema', () => {
-    it('should have all the types for the enum', () => {
+    it('should have all the types for the Method enum', () => {
       const MethodTypes = [...Object.keys(Method)];
       const schema: any = RequestSchema;
       expect(MethodTypes).toEqual(schema.properties?.method?.enum);
