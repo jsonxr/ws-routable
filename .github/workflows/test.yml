@@ -9,6 +9,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18.x
-      - run: yarn
+      - run: yarn --frozen-lockfile
       - run: yarn lint
       - run: yarn test
