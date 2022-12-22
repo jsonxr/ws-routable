@@ -2,13 +2,49 @@ name: Tests
 on: [push]
 jobs:
   test:
-    timeout-minutes: 30
+    timeout-minutes: 10
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18.x]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Lint and Test
+        run: |
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn test
+
+  publish:
+    needs: test
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: setup node
+        uses: actions/setup-node@v3
         with:
           node-version: 18.x
-      - run: yarn --frozen-lockfile
-      - run: yarn lint
-      - run: yarn test
+          registry-url: 'https://registry.npmjs.org'
+      - name: build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+      - name: publish
+        run: |
+          export PACKAGE_VERSION=`node -p "require('./package.json').version"`
+          yarn version --new-version "$PACKAGE_VERSION-dev.${GITHUB_SHA:0:7}" \
+            --preid dev --prerelease \
+            --no-git-tag-version
+          yarn publish --tag dev
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

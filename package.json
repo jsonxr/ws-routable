@@ -1,6 +1,6 @@
 {
   "name": "ws-routable",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "license": "MIT",
   "types": "./dist/index.d.ts",
   "main": "dist/ws-routable.cjs.js",
@@ -24,6 +24,7 @@
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@rollup/plugin-typescript": "^9.0.2",
     "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.17",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.28.0",
