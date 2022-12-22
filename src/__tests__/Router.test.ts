@@ -41,8 +41,20 @@ const expectOnlyToBeCalled = (functions: Record<string, unknown>, name: string) 
 };
 
 describe('Router', () => {
-  it('constructor', () => {
-    new Router();
+  describe('constructor', () => {
+    it('should allow zero arguments', () => {
+      const r = new Router();
+      expect(r.base).toEqual('');
+      expect(r.id).toEqual('');
+      expect(r.context).toEqual({});
+    });
+    it('should options', () => {
+      const ctx = { val: 1 };
+      const r = new Router({ context: ctx, id: '1', base: '/base' });
+      expect(r.base).toEqual('/base');
+      expect(r.id).toEqual('1');
+      expect(r.context).toEqual(ctx);
+    });
   });
 
   describe('addRoute', () => {
@@ -106,11 +118,11 @@ describe('Router', () => {
 
   describe('handle', () => {
     it('should populate params for request', async () => {
-      const router = new Router();
+      const ctx = {};
+      const router = new Router({ context: ctx });
       const call = jest.fn();
       router.get('/examples/:exampleId', call);
-      const ctx = {};
-      await router.handle({ url: 'http://localhost/examples/1', method: Method.GET }, ctx);
+      await router.handle({ url: 'http://localhost/examples/1', method: Method.GET });
       expect(call).toBeCalledWith(
         {
           method: 'GET',
@@ -129,7 +141,7 @@ describe('Router', () => {
       const call = jest.fn();
       router.get('/examples/:exampleId', call);
       const ctx = {};
-      await router.handle({ url: 'http://localhost/examples/1?param1=one&param2=two', method: Method.GET }, ctx);
+      await router.handle({ url: 'http://localhost/examples/1?param1=one&param2=two', method: Method.GET });
       expect(call).toBeCalledWith(
         {
           method: 'GET',
@@ -151,7 +163,7 @@ describe('Router', () => {
       const call = jest.fn();
       router.get('/examples/:exampleId', call);
       const ctx = {};
-      await router.handle({ url: 'http://localhost/examples/1?param1=one&param1=two', method: Method.GET }, ctx);
+      await router.handle({ url: 'http://localhost/examples/1?param1=one&param1=two', method: Method.GET });
       expect(call).toBeCalledWith(
         {
           method: 'GET',
@@ -207,15 +219,18 @@ describe('Router', () => {
       const url = 'http://localhost/examples/1/messages/1/bob';
       await router.handle({ url, method: Method.GET });
       expect(nocall).not.toBeCalled();
-      expect(call).toBeCalledWith({
-        method: 'GET',
-        params: {
-          id: '1',
-          messageId: '1',
+      expect(call).toBeCalledWith(
+        {
+          method: 'GET',
+          params: {
+            id: '1',
+            messageId: '1',
+          },
+          query: {},
+          url,
         },
-        query: {},
-        url,
-      });
+        {}
+      );
     });
   });
 });

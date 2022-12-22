@@ -1,6 +1,6 @@
 {
   "name": "ws-routable",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "license": "MIT",
   "types": "./dist/index.d.ts",
   "main": "dist/ws-routable.cjs.js",

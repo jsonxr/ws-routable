@@ -39,32 +39,38 @@ const Query = {
   },
 };
 
-export type RouteHandler<Req extends TRequest, Res, Ctx> = (
+export type TContext = object;
+
+export type RouteHandler<Req extends TRequest, Res, Ctx extends TContext> = (
   req: Req & RequestParams,
-  context?: Ctx
+  context: Ctx
 ) => Res | undefined | void | Promise<Res | undefined | void>;
 
-export type RouteEntry<Req extends TRequest, Res, Ctx> = [string, RegExp, RouteHandler<Req, Res, Ctx>[]];
+export type RouteEntry<Req extends TRequest, Res, Ctx extends TContext> = [
+  string,
+  RegExp,
+  RouteHandler<Req, Res, Ctx>[]
+];
 
-export interface Route<Req extends TRequest, Res, Ctx> {
+export interface Route<Req extends TRequest, Res, Ctx extends TContext> {
   (path: string, ...handlers: RouteHandler<Req, Res, Ctx>[]): Router<Req, Res, Ctx>;
 }
 
-export interface RouterOptions<Req extends TRequest, Res, Ctx = unknown> {
+export interface RouterOptions {
   id?: string;
   base?: string;
-  routes?: RouteEntry<Req, Res, Ctx>[];
 }
 
-export class Router<Req extends TRequest, Res, Ctx = unknown> {
+export class Router<Req extends TRequest, Res, Ctx extends TContext = object> {
   id: string;
   base: string;
-  routes: RouteEntry<Req, Res, Ctx>[];
+  context: Ctx;
+  routes: RouteEntry<Req, Res, Ctx>[] = [];
 
-  constructor({ base = '', routes = [], id }: RouterOptions<Req, Res, Ctx> = {}) {
-    this.base = base;
-    this.routes = routes;
-    this.id = id ?? '';
+  constructor(options: { context?: Ctx; id?: string; base?: string } = {}) {
+    this.base = options?.base ?? '';
+    this.id = options?.id ?? '';
+    this.context = options?.context ?? ({} as any);
   }
 
   all = this.addRoute('ALL');
@@ -78,7 +84,7 @@ export class Router<Req extends TRequest, Res, Ctx = unknown> {
   trace = this.addRoute('TRACE');
 
   // We want to be able to just hand off router.handle so, bind it to this instance
-  handle = async (req: Req, context?: Ctx) => {
+  handle = async (req: Req) => {
     const request = req as Req & RequestParams; // query, parmas Guaranteed to be assigned before called in handler
 
     //TODO: localhost hardcoded here for DurableObjects, how can we remove?
@@ -90,7 +96,7 @@ export class Router<Req extends TRequest, Res, Ctx = unknown> {
       if ((method === req.method || method === 'ALL') && match) {
         request.params = match.groups ?? {};
         for (const handler of handlers) {
-          const res = await (context ? handler(request, context) : handler(request));
+          const res = await handler(request, this.context);
           if (res !== undefined) {
             return res;
           }
