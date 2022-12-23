@@ -3,7 +3,7 @@
 Provides a routable WebSocket Session which enables the ability to send requests and receive responses that can be
 routed similar to express.
 
-![Badge](https://github.com/jsonxr/ws-routable/actions/workflows/test.yml/badge.svg)
+![Badge](https://github.com/jsonxr/ws-routable/actions/workflows/cicd.yml/badge.svg)
 
 ## Client
 
