@@ -5,7 +5,7 @@ routed similar to express.
 
 ![Badge](https://github.com/jsonxr/ws-routable/actions/workflows/test.yml/badge.svg)
 
-Client
+## Client
 
 ```typescript
 import { SocketSession } from 'ws-routable';
@@ -20,7 +20,7 @@ async function main() {
 }
 ```
 
-Server
+## Server
 
 ```typescript
 import { WebSocketServer } from 'ws';

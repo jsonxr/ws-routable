@@ -1,0 +1,21 @@
+name: cicd
+
+on:
+  pull_request:
+    branches: [main] # Only run on main branch?
+  push:
+    tags-ignore:
+      - '**'
+    branches:
+      - '**'
+    paths-ignore:
+      - 'docs/**'
+      - 'example/**'
+      - 'LICENSE'
+      - 'README.md'
+      - '.gitignore'
+      - '.node-version'
+
+jobs:
+  build:
+    uses: jsonxr/actions/.github/workflows/npm-cicd.yml@main
