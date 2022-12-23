@@ -52,4 +52,9 @@ global.crypto = require('crypto').webcrypto;
 
 # Development
 
-- Requires Node 18
+```sh
+brew install fnm
+brew install direnv
+```
+
+Requires Node 18
