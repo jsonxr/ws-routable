@@ -1,4 +1,4 @@
-import { Method, Router } from '../Router';
+import { Method, Router, TRequest } from '../Router';
 
 const createRouter = () => {
   const router = new Router();
@@ -46,14 +46,31 @@ describe('Router', () => {
       const r = new Router();
       expect(r.base).toEqual('');
       expect(r.id).toEqual('');
-      expect(r.context).toEqual({});
     });
     it('should options', () => {
-      const ctx = { val: 1 };
-      const r = new Router({ context: ctx, id: '1', base: '/base' });
+      const r = new Router({ id: '1', base: '/base' });
       expect(r.base).toEqual('/base');
       expect(r.id).toEqual('1');
-      expect(r.context).toEqual(ctx);
+    });
+    it('should be type safe', async () => {
+      interface Request extends TRequest {
+        body: string;
+      }
+      interface Response {
+        resBody: string;
+      }
+      type Context = {
+        param: number;
+      };
+      const context: Context = { param: 1 };
+      const router = new Router<Request, Response, Context>();
+      router.get('/examples', (req: Request, ctx: Context) => {
+        expect(req.method).toBeTruthy();
+        expect(req.url).toBeTruthy();
+        expect(req.body).toBeTruthy();
+        expect(ctx.param).toEqual(context.param);
+      });
+      await router.handle({ url: 'http://localhost/examples', method: Method.GET, body: 'yup' }, context);
     });
   });
 
@@ -117,9 +134,37 @@ describe('Router', () => {
   });
 
   describe('handle', () => {
+    it('should call handler with context if it is passed in', async () => {
+      type Context = {
+        param: number;
+      };
+      const context: Context = { param: 1 };
+      const router = new Router<any, any, Context>();
+      router.get('/examples', (_req, ctx: Context) => {
+        expect(ctx.param).toEqual(context.param);
+      });
+      await router.handle({ url: 'http://localhost/examples', method: Method.GET }, context);
+    });
+
+    it('should call handler with empty context if it is not passed in', async () => {
+      const call = jest.fn();
+      const router = new Router();
+      router.get('/examples', call);
+      await router.handle({ url: 'http://localhost/examples', method: Method.GET });
+      expect(call).toBeCalledWith(
+        {
+          method: 'GET',
+          params: {},
+          query: {},
+          url: 'http://localhost/examples',
+        },
+        {}
+      );
+    });
+
     it('should populate params for request', async () => {
       const ctx = {};
-      const router = new Router({ context: ctx });
+      const router = new Router();
       const call = jest.fn();
       router.get('/examples/:exampleId', call);
       await router.handle({ url: 'http://localhost/examples/1', method: Method.GET });
