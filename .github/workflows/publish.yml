@@ -23,9 +23,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-      - run: yarn test
+      - name: lint, test
+        run: |
+          yarn install --frozen-lockfile
+          yarn lint
+          yarn test
 
   publish:
     needs: test
@@ -43,8 +45,14 @@ jobs:
         with:
           node-version: 18.x
           registry-url: 'https://registry.npmjs.org'
-      - run: yarn install --frozen-lockfile
-      - run: yarn build
-      - run: yarn publish
+      - name: build
+        run: |
+          yarn install --frozen-lockfile
+          yarn build
+      - name: publish
+        run: |
+          export PACKAGE_VERSION=`node -p "require('./package.json').version"`
+          yarn version --new-version "$PACKAGE_VERSION"
+          yarn publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

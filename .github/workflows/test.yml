@@ -1,8 +1,8 @@
 name: Tests
 on:
   push:
-    branches:
-      - '!main'
+    branches-ignore:
+      - main
 jobs:
   test:
     timeout-minutes: 10
@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-      - name: Lint and Test
+      - name: lint, test
         run: |
           yarn install --frozen-lockfile
           yarn lint
