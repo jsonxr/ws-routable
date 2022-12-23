@@ -64,13 +64,11 @@ export interface RouterOptions {
 export class Router<Req extends TRequest, Res, Ctx extends TContext = object> {
   id: string;
   base: string;
-  context: Ctx;
   routes: RouteEntry<Req, Res, Ctx>[] = [];
 
-  constructor(options: { context?: Ctx; id?: string; base?: string } = {}) {
+  constructor(options: { id?: string; base?: string } = {}) {
     this.base = options?.base ?? '';
     this.id = options?.id ?? '';
-    this.context = options?.context ?? ({} as any);
   }
 
   all = this.addRoute('ALL');
@@ -84,7 +82,7 @@ export class Router<Req extends TRequest, Res, Ctx extends TContext = object> {
   trace = this.addRoute('TRACE');
 
   // We want to be able to just hand off router.handle so, bind it to this instance
-  handle = async (req: Req) => {
+  handle = async (req: Req, ctx?: Ctx) => {
     const request = req as Req & RequestParams; // query, parmas Guaranteed to be assigned before called in handler
 
     //TODO: localhost hardcoded here for DurableObjects, how can we remove?
@@ -96,7 +94,7 @@ export class Router<Req extends TRequest, Res, Ctx extends TContext = object> {
       if ((method === req.method || method === 'ALL') && match) {
         request.params = match.groups ?? {};
         for (const handler of handlers) {
-          const res = await handler(request, this.context);
+          const res = await handler(request, ctx ?? ({} as Ctx));
           if (res !== undefined) {
             return res;
           }

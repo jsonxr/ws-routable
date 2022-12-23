@@ -11,7 +11,7 @@ jobs:
         id: release
         with:
           release-type: node
-          package-name: test-release-please
+          package-name: ws-routable
 
       # The logic below handles the npm publication:
       - if: ${{ steps.release.outputs.release_created }}
