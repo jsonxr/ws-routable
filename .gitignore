@@ -1,6 +1,7 @@
 dist/
 node_modules/
 coverage
+.envrc
 
 # Logs
 npm-debug.log_
