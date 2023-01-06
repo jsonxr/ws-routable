@@ -111,8 +111,8 @@ export class Router<Req extends TRequest, Res, Ctx extends TContext = object> {
           `^${
             (this.base + route)
               .replace(/(\/?)\*/g, '($1.*)?') // trailing wildcard
-              .replace(/\/$/, '') // remove trailing slash
-              .replace(/:(\w+)(\?)?(\.)?/g, '$2(?<$1>[^/]+)$2$3') // named params
+              .replace(/\/$/, '') // remove trailing slash  "/myroute/why/" -> "/myroute/why"... Disallow directory urls
+              .replace(/:(\w+)(\?)?(\.)?/g, '$2(?<$1>[^/]+)$2$3') // named params like ":paramId"
               .replace(/\.(?=[\w(])/, '\\.') // dot in path
               .replace(/\)\.\?\(([^\[]+)\[\^/g, '?)\\.?($1(?<=\\.)[^\\.') // optional image format
           }/*$`

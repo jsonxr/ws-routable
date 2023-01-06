@@ -4,6 +4,9 @@ Provides a routable WebSocket Session which enables the ability to send requests
 routed similar to express.
 
 ![Badge](https://github.com/jsonxr/ws-routable/actions/workflows/cicd.yml/badge.svg)
+[![CodeFactor](https://www.codefactor.io/repository/github/jsonxr/ws-routable/badge)](https://www.codefactor.io/repository/github/jsonxr/ws-routable)
+[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/jsonxr/ws-routable.svg)](http://isitmaintained.com/project/jsonxr/ws-routable "Average time to resolve an issue")
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/jsonxr/ws-routable.svg)](http://isitmaintained.com/project/jsonxr/ws-routable "Percentage of issues still open")
 
 ## Client
 
