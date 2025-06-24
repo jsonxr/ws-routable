@@ -33,9 +33,9 @@ const expectOnlyToBeCalled = (functions: Record<string, unknown>, name: string) 
   const functionNames = Object.keys(functions);
   for (const functionName of functionNames) {
     if (name === functionName) {
-      expect(functions[functionName]).toBeCalled();
+      expect(functions[functionName]).toHaveBeenCalled();
     } else {
-      expect(functions[functionName]).not.toBeCalled();
+      expect(functions[functionName]).not.toHaveBeenCalled();
     }
   }
 };
@@ -129,7 +129,7 @@ describe('Router', () => {
       const all = jest.fn();
       router.all('*', all);
       await router.handle({ url: 'http://localhost', method: Method.GET });
-      expect(all).toBeCalled();
+      expect(all).toHaveBeenCalled();
     });
   });
 
@@ -151,7 +151,7 @@ describe('Router', () => {
       const router = new Router();
       router.get('/examples', call);
       await router.handle({ url: 'http://localhost/examples', method: Method.GET });
-      expect(call).toBeCalledWith(
+      expect(call).toHaveBeenCalledWith(
         {
           method: 'GET',
           params: {},
@@ -168,7 +168,7 @@ describe('Router', () => {
       const call = jest.fn();
       router.get('/examples/:exampleId', call);
       await router.handle({ url: 'http://localhost/examples/1', method: Method.GET });
-      expect(call).toBeCalledWith(
+      expect(call).toHaveBeenCalledWith(
         {
           method: 'GET',
           params: {
@@ -187,7 +187,7 @@ describe('Router', () => {
       router.get('/examples/:exampleId', call);
       const ctx = {};
       await router.handle({ url: 'http://localhost/examples/1?param1=one&param2=two', method: Method.GET });
-      expect(call).toBeCalledWith(
+      expect(call).toHaveBeenCalledWith(
         {
           method: 'GET',
           params: {
@@ -209,7 +209,7 @@ describe('Router', () => {
       router.get('/examples/:exampleId', call);
       const ctx = {};
       await router.handle({ url: 'http://localhost/examples/1?param1=one&param1=two', method: Method.GET });
-      expect(call).toBeCalledWith(
+      expect(call).toHaveBeenCalledWith(
         {
           method: 'GET',
           params: {
@@ -234,10 +234,10 @@ describe('Router', () => {
       router.all('*', nocall);
 
       await router.handle({ url: 'http://localhost', method: Method.GET });
-      expect(call).toBeCalled();
-      expect(response).toBeCalled();
-      expect(response).toReturnWith('response');
-      expect(nocall).not.toBeCalled();
+      expect(call).toHaveBeenCalled();
+      expect(response).toHaveBeenCalled();
+      expect(response).toHaveBeenCalledWith({ method: 'GET', params: {}, query: {}, url: 'http://localhost' }, {});
+      expect(nocall).not.toHaveBeenCalled();
     });
 
     it('should match * patterns at the end', async () => {
@@ -249,8 +249,8 @@ describe('Router', () => {
       router.all('/examples*', call);
       router.all('/examples/*', call);
       await router.handle({ url: 'http://localhost/examples/1', method: Method.GET });
-      expect(nocall).not.toBeCalled();
-      expect(call).toBeCalledTimes(2);
+      expect(nocall).not.toHaveBeenCalled();
+      expect(call).toHaveBeenCalledTimes(2);
     });
 
     it('should match * patterns in the middle', async () => {
@@ -263,8 +263,8 @@ describe('Router', () => {
       router.all('/examples/:id/*/messages/:messageId/*/bob', call);
       const url = 'http://localhost/examples/1/messages/1/bob';
       await router.handle({ url, method: Method.GET });
-      expect(nocall).not.toBeCalled();
-      expect(call).toBeCalledWith(
+      expect(nocall).not.toHaveBeenCalled();
+      expect(call).toHaveBeenCalledWith(
         {
           method: 'GET',
           params: {

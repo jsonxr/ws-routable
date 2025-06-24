@@ -2,11 +2,11 @@ import { EnvelopeType } from '../Envelope';
 import { Method } from '../Router';
 import {
   EnvelopeSchema,
+  RequestSchema,
+  ResponseSchema,
   throwIfValidationErrors,
   validate,
   ValidationErrors,
-  RequestSchema,
-  ResponseSchema,
 } from '../Validation';
 
 describe('Validation', () => {
@@ -29,7 +29,7 @@ describe('Validation', () => {
     it('should throw error if data is not an object', () => {
       expect(() => {
         validate(RequestSchema, 'fake' as any);
-      }).toThrowError('Validation.validate: data is not an object');
+      }).toThrow('Validation.validate: data is not an object');
     });
   });
 
@@ -47,7 +47,7 @@ describe('Validation', () => {
     it("should throw error if schema doesn't match data", () => {
       expect(() => {
         throwIfValidationErrors(EnvelopeSchema, {}, 'MyError');
-      }).toThrowError('MyError');
+      }).toThrow('MyError');
     });
 
     it('should throw a ValidationError', () => {

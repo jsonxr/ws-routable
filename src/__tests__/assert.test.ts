@@ -6,7 +6,7 @@ describe('assert', () => {
   });
 
   it('should throw an error with message if false', () => {
-    expect(() => assert(false, 'Test')).toThrowError('Test');
+    expect(() => assert(false, 'Test')).toThrow('Test');
   });
 
   it('should do nothing if true', () => {

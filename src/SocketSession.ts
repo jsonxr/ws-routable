@@ -239,6 +239,7 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
     } catch (err) {
       responseEnvelope = Envelope.wrapError(id, err);
     }
+    console.log('state', this.#socket.readyState);
     this.#socket.send(JSON.stringify(responseEnvelope));
   };
 
