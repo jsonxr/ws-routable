@@ -1,4 +1,4 @@
-import { Schema, ValidationError, validate as jtdValidate } from 'jtd';
+import { type Schema, type ValidationError, validate as jtdValidate } from 'jtd';
 
 //------------------------------------------------------------------------------
 // Envelope

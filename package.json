@@ -1,6 +1,6 @@
 {
   "name": "ws-routable",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "license": "MIT",
   "types": "./dist/index.d.ts",
   "main": "dist/ws-routable.cjs",
@@ -11,7 +11,7 @@
     "start": "rollup -c -w",
     "lint": "eslint .",
     "test": "yarn jest",
-    "build": "rollup -c",
+    "build": "rm -rf dist && rollup -c",
     "prepublish": "yarn build",
     ".whatisthis.prepare": "yarn build"
   },
