@@ -2,6 +2,7 @@ dist/
 node_modules/
 coverage
 .envrc
+yarn.lock
 
 # Logs
 npm-debug.log_
@@ -14,3 +15,4 @@ yarn-error.log*
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.\*
+.DS_Store

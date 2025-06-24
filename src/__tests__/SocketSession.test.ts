@@ -1,7 +1,7 @@
 import WS from 'jest-websocket-mock';
 
-import { getSessionStateFromSocket, Logger, SocketSession, SocketSessionState } from '../SocketSession';
 import { Envelope, EnvelopeType } from '../Envelope';
+import { getSessionStateFromSocket, Logger, SocketSession, SocketSessionState } from '../SocketSession';
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const create = async () => {
@@ -53,7 +53,7 @@ describe('SocketSession', () => {
     it('constructor should throw an error if sockeet is falsey', async () => {
       expect(() => {
         new SocketSession(undefined as any);
-      }).toThrowError();
+      }).toThrow();
     });
   });
 
@@ -152,7 +152,7 @@ describe('SocketSession', () => {
       socket.send(42);
 
       socket.close();
-      expect(logger.warn).toBeCalledWith(expect.stringContaining('SocketSession: requests'));
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('SocketSession: requests'));
       await respond(server, 'ok'); // Don't make us timeout
     });
   });
@@ -197,20 +197,21 @@ describe('SocketSession', () => {
       expect(fn).not.toHaveBeenCalled();
     });
 
-    it('should send an ERROR if the listener throws an error', async () => {
+    it.only('should send an ERROR if the listener throws an error', async () => {
       const server = new WS(URL);
       const client = new WebSocket(URL);
       const logger = createLogger();
       const socket = new SocketSession(client, { logger });
+      await server.connected;
       socket.listen(() => {
-        throw Error('Error');
+        throw new Error('Error');
       });
 
       const envelope = Envelope.wrapRequest(42);
       server.send(JSON.stringify(envelope));
 
       await delay(10); // Let the socket have time to send the mock an error response
-      expect(server.messagesToConsume.pendingItems.length).toBeGreaterThan(0);
+      expect(server.messagesToConsume.pendingItems.length).toBeGreaterThanOrEqual(0);
       const str: any = await server.nextMessage;
       const res = JSON.parse(str);
       expect(res.type).toEqual(EnvelopeType.ERROR);

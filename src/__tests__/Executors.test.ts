@@ -32,7 +32,7 @@ describe('Executors', () => {
       const executor = createExecutor();
       executors.set('1', executor);
       await delay(10);
-      expect(executor.reject).toBeCalledWith(new Error('TIMEOUT'));
+      expect(executor.reject).toHaveBeenCalledWith(new Error('TIMEOUT'));
     });
 
     it('should reject if default timeout reached', async () => {
@@ -41,7 +41,7 @@ describe('Executors', () => {
       const executor: Executor = { resolve: jest.fn(), reject: jest.fn() };
       executors.set('1', executor);
       await delay(10);
-      expect(executor.reject).toBeCalledWith(new Error('TIMEOUT'));
+      expect(executor.reject).toHaveBeenCalledWith(new Error('TIMEOUT'));
     });
   });
 
@@ -54,8 +54,8 @@ describe('Executors', () => {
       expect(result).toBeDefined();
       await delay(10);
       result?.resolve();
-      expect(executor.reject).not.toBeCalled();
-      expect(executor.resolve).toBeCalled();
+      expect(executor.reject).not.toHaveBeenCalled();
+      expect(executor.resolve).toHaveBeenCalled();
     });
 
     it('should remove executor when retrieved', async () => {
@@ -111,8 +111,8 @@ describe('Executors', () => {
       const executor = createExecutor();
       executors.set('1', executor);
       executors.resolve('1', 'yes');
-      expect(executor.resolve).toBeCalledWith('yes');
-      expect(executor.reject).not.toBeCalled();
+      expect(executor.resolve).toHaveBeenCalledWith('yes');
+      expect(executor.reject).not.toHaveBeenCalled();
     });
 
     it('should throw error if resolve can not find key', async () => {
@@ -129,8 +129,8 @@ describe('Executors', () => {
       const executor = createExecutor();
       executors.set('1', executor);
       executors.reject('1', 'yes');
-      expect(executor.resolve).not.toBeCalled();
-      expect(executor.reject).toBeCalledWith('yes');
+      expect(executor.resolve).not.toHaveBeenCalled();
+      expect(executor.reject).toHaveBeenCalledWith('yes');
     });
 
     it('should throw error if reject can not find key', async () => {

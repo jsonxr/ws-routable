@@ -8,7 +8,7 @@ describe('Envelope', () => {
       const str = JSON.stringify(data);
       expect(() => {
         Envelope.parse(str);
-      }).toThrowError('Envelope is non conforming');
+      }).toThrow('Envelope is non conforming');
     });
     it('should parse a request', () => {
       const envelope = Envelope.wrapRequest({ method: 'GET', url: '/tests' });
@@ -23,7 +23,7 @@ describe('Envelope', () => {
     it('should throw an error if data is not a string', () => {
       expect(() => {
         Envelope.parse(0 as any);
-      }).toThrowError();
+      }).toThrow();
     });
   });
 
