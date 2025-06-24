@@ -1,4 +1,4 @@
-import { Method } from './Router';
+import type { Method } from './Router';
 
 //------------------------------------------------------------------------------
 // Request

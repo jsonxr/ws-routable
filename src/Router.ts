@@ -49,7 +49,7 @@ export type RouteHandler<Req extends TRequest, Res, Ctx extends TContext> = (
 export type RouteEntry<Req extends TRequest, Res, Ctx extends TContext> = [
   string,
   RegExp,
-  RouteHandler<Req, Res, Ctx>[]
+  RouteHandler<Req, Res, Ctx>[],
 ];
 
 export interface Route<Req extends TRequest, Res, Ctx extends TContext> {

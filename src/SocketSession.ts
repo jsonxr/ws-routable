@@ -28,20 +28,6 @@ export const SocketSessionState = {
 } as const;
 export type SocketSessionState = keyof typeof SocketSessionState;
 
-export const getSessionStateFromSocket = (readyState: number) => {
-  switch (readyState) {
-    case WebSocket.CLOSED:
-      return SocketSessionState.CLOSED;
-    case WebSocket.OPEN:
-      return SocketSessionState.OPEN;
-    case WebSocket.CONNECTING:
-      return SocketSessionState.CONNECTING;
-    case WebSocket.CLOSING:
-      return SocketSessionState.CLOSING;
-  }
-  return SocketSessionState.UNKNOWN;
-};
-
 export class SocketSession<Req extends object = any, Res extends object = any> {
   timeout = 3000;
   #id: string;
@@ -58,7 +44,7 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
     assert(socket, 'SocketSession.constructor: socket must be provided');
     this.#logger?.debug(`SocketSession_${this.#id} = new SocketSession(${socket.url})`);
     this.#socket = socket;
-    this.#state = getSessionStateFromSocket(socket.readyState);
+    this.#state = SocketSession.getSessionStateFromSocket(socket.readyState);
     this.#abort = new AbortController();
     this.#socket.addEventListener('open', this.#handleSocketOpen, { signal: this.#abort.signal });
     this.#socket.addEventListener('close', this.#handleSocketClose, { signal: this.#abort.signal });
@@ -115,6 +101,20 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
     return this.#state;
   }
 
+  static getSessionStateFromSocket(readyState: number) {
+    switch (readyState) {
+      case WebSocket.CLOSED:
+        return SocketSessionState.CLOSED;
+      case WebSocket.OPEN:
+        return SocketSessionState.OPEN;
+      case WebSocket.CONNECTING:
+        return SocketSessionState.CONNECTING;
+      case WebSocket.CLOSING:
+        return SocketSessionState.CLOSING;
+    }
+    return SocketSessionState.UNKNOWN;
+  }
+
   //----------------------------------------------------------------------------
   // Handle Incoming Messages
   //----------------------------------------------------------------------------
@@ -140,7 +140,7 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
   #handleSocketOpen = (_event: Event) => {
     this.#logger?.debug(`SocketSession_${this.#id}.#handleSocketOpen()`);
 
-    this.#state = getSessionStateFromSocket(this.#socket?.readyState);
+    this.#state = SocketSession.getSessionStateFromSocket(this.#socket?.readyState);
     const executor = this.#executors.peek(OPEN_EXECUTOR);
     if (executor) {
       executor.resolve();
@@ -153,7 +153,7 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
     assert(typeof event === 'object');
     this.#logger?.debug(`SocketSession_${this.#id}.#handleSocketClose(${stringifyCloseEvent(event)})`);
 
-    this.#state = getSessionStateFromSocket(this.#socket?.readyState);
+    this.#state = SocketSession.getSessionStateFromSocket(this.#socket?.readyState);
 
     // If we are awaiting an open, reject the open promise
     const executor = this.#executors.peek(OPEN_EXECUTOR);
@@ -178,7 +178,7 @@ export class SocketSession<Req extends object = any, Res extends object = any> {
     assert(typeof event === 'object');
     this.#logger?.debug(`SocketSession_${this.#id}.#handleSocketError(${JSON.stringify(event)})`);
 
-    this.#state = getSessionStateFromSocket(this.#socket?.readyState);
+    this.#state = SocketSession.getSessionStateFromSocket(this.#socket?.readyState);
   };
 
   /**
